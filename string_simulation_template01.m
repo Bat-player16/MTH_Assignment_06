@@ -1,14 +1,13 @@
 clc;
 clear;
-clf;
 num_masses = 2;
 total_mass = 10;
-tension_force = 20;
+tension_force = 5;
 string_length = 1;
-damping_coeff = .6;
+damping_coeff = .02;
 dx = string_length/(num_masses+1);
-amplitude_Uf = 10;
-omega_Uf = 20*pi;
+amplitude_Uf = 5;
+omega_Uf = 2*pi;
 %list of x points (including the two endpoints)
 xlist = linspace(0,string_length,num_masses+2);
 Uf_func = @(t_in) Uf_function(amplitude_Uf,omega_Uf,t_in);
@@ -39,4 +38,5 @@ V0 = [U0;dUdt0];
 [~,Vlist] = ode45(my_rate_func,tlist,V0);
 %your code to generate an animation of the system
 Vlist
+figure();
 plot(tlist,Vlist(:,1))
