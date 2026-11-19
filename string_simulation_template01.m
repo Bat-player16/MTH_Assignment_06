@@ -1,17 +1,27 @@
 clc;
 clear;
-num_masses = 2;
+num_masses = 6;
 total_mass = 10;
 tension_force = 5;
 string_length = 1;
 damping_coeff = .02;
 dx = string_length/(num_masses+1);
-amplitude_Uf = 5;
+amplitude_Uf = 0.05;
 omega_Uf = 2*pi;
+
+% KEY VARS
+% U -> displacement of the masses, one row per mass
+% Uf -> displacement of the actuator
+% V -> displacement and velocity in the same column vector
+%   2 columns per mass: one displacement and one velocity
+%   all displacement together, then all velocity together, like u_m1, u_m2, du_m1, du_m2
+
 %list of x points (including the two endpoints)
 xlist = linspace(0,string_length,num_masses+2);
+
 Uf_func = @(t_in) Uf_function(amplitude_Uf,omega_Uf,t_in);
 dUfdt_func = @(t_in) dUfdt_function(amplitude_Uf,omega_Uf,t_in);
+
 %generate the struct
 string_params = struct();
 string_params.n = num_masses;
@@ -22,21 +32,27 @@ string_params.Tf = tension_force;
 string_params.L = string_length;
 string_params.c = damping_coeff;
 string_params.dx = dx;
+
 %load string_params into rate function
-tspan = [0,40];%your code here
+my_rate_func = @(t_in,V_in) string_rate_func01(t_in,V_in,string_params);
 
-tlist = linspace(tspan(1),tspan(end),4001);
-
-step=tlist(end)-tlist(end-1);
-
-my_rate_func = @(t_in,V_in) string_rate_func01(t_in,V_in,step,string_params);
 %initial conditions
-U0 = 0;
-dUdt0 = 0;
+U0 = linspace(0, Uf_func(0), num_masses+2)'; % needs to be vertical
+U0 = U0(2:end-1);
+dUdt0 = zeros(num_masses, 1);
 V0 = [U0;dUdt0];
-%run the integration
-[~,Vlist] = ode45(my_rate_func,tlist,V0);
-%your code to generate an animation of the system
-Vlist
+
+tspan = [0, 40];
+tlist = linspace(tspan(1), tspan(end), 4001);
+
+%run intergration
+[tlist, Vlist] = ode45(my_rate_func, tlist, V0);
+
+% test plot to see the mass 1 displacement and velocity (not for
+% submission)
 figure();
-plot(tlist,Vlist(:,1))
+plot(tlist,Vlist(:,1)) % plotting the displacements for mass 1
+hold on;
+plot(tlist, Vlist(:,num_masses+1)); %plotting the velocity for mass 1
+
+
