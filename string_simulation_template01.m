@@ -55,4 +55,39 @@ plot(tlist,Vlist(:,1)) % plotting the displacements for mass 1
 hold on;
 plot(tlist, Vlist(:,num_masses+1)); %plotting the velocity for mass 1
 
+%% mode analysis
+% assuming damping is zero and no forcing
+% generalized eigenvalue problem
+[M_mat,K_mat] = construct_2nd_order_matrices(string_params);
+[Ur_mat, lambda_mat] = eig(K_mat, M_mat);
 
+% get the frequencies
+lambda_vals = diag(lambda_mat);
+omega_r = sqrt(lambda_vals);
+for i = 1:num_masses %normalize so you can see the difference
+    Ur_mat(:,i) = Ur_mat(:,i)/max(abs(Ur_mat(:,i)));
+end
+
+
+% mode to test
+for mode_index = 1:6
+    omega_Uf = omega_r(mode_index);
+    Uf_func = @(t_in) Uf_function(amplitude_Uf,omega_Uf,t_in);
+    dUfdt_func = @(t_in) dUfdt_function(amplitude_Uf,omega_Uf,t_in);
+    string_params.Uf_func = Uf_func;
+    string_params.dUfdt_func = dUfdt_func;
+    my_rate_func = @(t_in,V_in) string_rate_func01(t_in,V_in,string_params);
+    U0 = linspace(0, Uf_func(0), num_masses+2)'; % needs to be vertical
+    U0 = U0(2:end-1);
+    dUdt0 = zeros(num_masses, 1);
+    V0 = [U0;dUdt0];
+    
+    tspan = [0, 40];
+    tlist = linspace(tspan(1), tspan(end), 4001);
+    
+    %run intergration
+    [tlist, Vlist] = ode45(my_rate_func, tlist, V0);
+
+    % animation here (per mode index)
+
+end
